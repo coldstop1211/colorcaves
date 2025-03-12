@@ -2,7 +2,7 @@ import java.io.*;
 import java.util.*;
 
 @SuppressWarnings("unused")
-public class SmartBot2 {
+public class SmartBot {
 
     private SerialLoader sl;
     private Room curr;
@@ -13,8 +13,9 @@ public class SmartBot2 {
     private Map<Room, Room> cameFrom;
     private List<Door> optimizedPath;
     private List<String> path;
+    private int steps;
 
-    public void load(String path) {
+    public void load(String path) { //load cave data from the files
         sl = new SerialLoader();
         sl.deserialize(path);
         curr = sl.getStart();
@@ -27,14 +28,14 @@ public class SmartBot2 {
         this.path = new ArrayList<>();
     }
 
-    public void createPath() {
-        Queue<Room> queue = new LinkedList<>();
+    public void createPath() { //find the shortest path fromthe start room to the end room
+        Queue<Room> queue = new LinkedList<>(); //uses a queue to search
         Map<Room, Door> doorUsed = new HashMap<>();
         
         queue.offer(start);
         visited.add(start);
 
-        while (!queue.isEmpty()) {
+        while (!queue.isEmpty()) { //keep track of doors used to enter each room
             Room room = queue.poll();
             if (room.equals(end)) break;
 
@@ -54,22 +55,24 @@ public class SmartBot2 {
         while (!room.equals(start)) {
             Door door = doorUsed.get(room);
             pathList.add(door);
-            room = cameFrom.get(room);
+            room = cameFrom.get(room); //once the end room is reached, reconstruct the path from the start to the end using the cameFrom map.
         }
         Collections.reverse(pathList);
 
-        optimizedPath = optimizePath(pathList);
+        optimizedPath = optimizePath(pathList); //Optimize the path to remove unnecessary backtracking.
         for (Door d : optimizedPath) {
             path.add(d.name());
         }
 
+        //Print the optimized path and the number of explore steps.
         System.out.println("Optimized Path: " + String.join(", ", path));
-        System.out.println("Explore Steps: " + Room.getNumMoves());
+         steps = Room.getNumMoves();
+        System.out.println("Explore Steps: " + steps);
     }
 
-    public void traverse() {
+    public void traverse() { //Traverse the cave using the optimized path for 40 back-and-forth trips.
         int totalSteps = 0;
-        for (int i = 0; i < 40; i++) {
+        for (int i = 0; i < 40; i++) { //For 40 iterations, move through the optimized path from start to end and back.
             for (Door d : optimizedPath) {
                 curr = curr.enter(d);
                 totalSteps++;
@@ -80,10 +83,11 @@ public class SmartBot2 {
             }
         }
         System.out.println("Total Path Steps: " + optimizedPath.size());
-        System.out.println("Total Score: " + (Room.getNumMoves() + optimizedPath.size() * 40));
+        int pathsteps = (optimizedPath.size() * 40);
+        System.out.println("Total Score: " + (steps + pathsteps));
     }
 
-    private List<Door> optimizePath(List<Door> path) {
+    private List<Door> optimizePath(List<Door> path) { //Optimize the path to remove unnecessary backtracking.
         Stack<Door> stack = new Stack<>();
         for (Door d : path) {
             if (!stack.isEmpty() && stack.peek().equals(d)) {
@@ -93,11 +97,17 @@ public class SmartBot2 {
             }
         }
         return new ArrayList<>(stack);
+
+        /*
+         * use a stack to keep track of the doors in the path.
+         * if a door leads back to the previous room, remove it from the stack.
+         * return the optimized path as a list of doors.
+         */
     }
 
     public static void main(String[] args) {
         SmartBot bot = new SmartBot();
-        bot.load("/Users/ashumittal/Downloads/programs/2024/2025/CaveStarter/CaveData/L1.ser");
+        bot.load("/Users/ashumittal/Downloads/programs/2024/2025/CaveStarter/CaveData/L3.ser");
         bot.createPath();
         bot.traverse();
     }
