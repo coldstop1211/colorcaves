@@ -10,7 +10,7 @@ import java.util.*;
  */
 
 @SuppressWarnings("unused")
-public class SmartBot {
+public class SmartBot1 {
     
     private SerialLoader sl;
     private Room curr;
